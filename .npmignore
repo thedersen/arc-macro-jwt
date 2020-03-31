@@ -1,3 +1,4 @@
 src/http
-app.arc
+.arc
 sam.json
+sam.yaml

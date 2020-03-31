@@ -38,12 +38,14 @@ module.exports = function(arc, cfn) {
 
     for (const route of secureRoutes) {
       const resource = findResourceForRoute(cfn, route._[0], route._[1]);
+      const authScopes =
+        route.auth === true ? [] : route.auth.split(',').map(s => s.trim());
 
       cfn.Resources[resource].Properties.Events[
         `${resource}Event`
       ].Properties.Auth = {
         Authorizer: 'OAuth2Authorizer',
-        AuthorizationScopes: route.auth.split(',').map(s => s.trim()),
+        AuthorizationScopes: authScopes,
       };
     }
   }

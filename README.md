@@ -1,6 +1,6 @@
 # arc-macro-auth
 
-Use JWT authentication with Architect HTTP APIs.
+Use JWT authentication with [Architect](https://arc.codes) HTTP APIs.
 
 ## Ok..How?!
 
@@ -8,7 +8,7 @@ Install:
 
 `npm i arc-macro-auth`
 
-And add to your arcfile:
+And add to your .arc-file:
 
 ```arc
 @app

@@ -3,6 +3,7 @@ test-auth
 
 @http
 get /foo
+post /foo --auth
 get /bar --auth read:bar,write:bar
 
 @auth
