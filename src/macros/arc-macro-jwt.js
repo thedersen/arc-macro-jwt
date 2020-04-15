@@ -2,7 +2,7 @@ const toLogicalID = require('@architect/utils/to-logical-id');
 const yargs = require('yargs-parser');
 
 module.exports = function(arc, cfn) {
-  if (!arc.auth) {
+  if (!arc.jwt) {
     return cfn;
   }
 
@@ -34,12 +34,12 @@ module.exports = function(arc, cfn) {
   } else {
     const secureRoutes = arc.http
       .map(route => yargs(route))
-      .filter(route => Boolean(route.auth));
+      .filter(route => Boolean(route.jwt));
 
     for (const route of secureRoutes) {
       const resource = findResourceForRoute(cfn, route._[0], route._[1]);
       const authScopes =
-        route.auth === true ? [] : route.auth.split(',').map(s => s.trim());
+        route.jwt === true ? [] : route.jwt.split(',').map(s => s.trim());
 
       cfn.Resources[resource].Properties.Events[
         `${resource}Event`
