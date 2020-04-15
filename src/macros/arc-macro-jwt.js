@@ -129,7 +129,7 @@ function getConfig(arc) {
     default: false,
   };
 
-  return arc.auth.reduce((cfg, value) => {
+  return arc.jwt.reduce((cfg, value) => {
     if (value[0] === 'audience' || value[0] === 'scopes') {
       cfg[value[0]] = value[1].split(',').map(s => s.trim());
     } else {
