@@ -6,7 +6,7 @@ Use JWT authentication with [Architect](https://arc.codes) HTTP APIs.
 
 Install:
 
-`npm i arc-macro-auth`
+`npm i arc-macro-jwt`
 
 And add to your .arc-file:
 
