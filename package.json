@@ -1,6 +1,6 @@
 {
   "name": "arc-macro-jwt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Use JWT authentication with Architect HTTP APIs",
   "main": "src/macros/arc-macro-jwt.js",
   "dependencies": {
