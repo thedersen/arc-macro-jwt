@@ -37,7 +37,11 @@ module.exports = function(arc, cfn) {
       .filter(route => Boolean(route.jwt));
 
     for (const route of secureRoutes) {
-      const resource = findResourceForRoute(cfn, route._[0], route._[1]);
+      const resource = findResourceForRoute(
+        cfn,
+        route._[0],
+        unexpress(route._[1])
+      );
       const authScopes =
         route.jwt === true ? [] : route.jwt.split(',').map(s => s.trim());
 
@@ -138,4 +142,14 @@ function getConfig(arc) {
 
     return cfg;
   }, defaultConfig);
+}
+
+function unexpress(completeRoute) {
+  return completeRoute
+    .split('/')
+    .map(part => {
+      const isParameter = part[0] === ':';
+      return isParameter ? `{${part.replace(':', '')}}` : part;
+    })
+    .join('/');
 }
