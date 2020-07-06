@@ -1,18 +1,21 @@
 @app
-test-auth
+test-jwt
+
+@aws
+region eu-central-1
+apigateway http
 
 @http
 get /foo
-post /foo --jwt
-get /bar --jwt read:bar,write:bar
+post /foo #jwt
+get /bar/:baz #jwt read:bar,write:bar
 
 @jwt
 issuer https://example.auth0.com/ #Issuer of JWT
 audience https://example.com,https://example2.com #Audience in the JWT
 identitySource $request.header.Authorization #Default header.Authorization
 scopes read:foo,write:foo #Not required
-default false #Optionally secure all routes (--jwt flags in @http are ignored)
+default false #Optionally secure all routes (@jwt pragmas in .arc-config are ignored)
 
 @macros
-architect/macro-http-api
 arc-macro-jwt

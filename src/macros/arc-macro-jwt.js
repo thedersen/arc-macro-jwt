@@ -1,18 +1,13 @@
-const toLogicalID = require('@architect/utils/to-logical-id');
-const yargs = require('yargs-parser');
+const parse = require('@architect/parser');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = function(arc, cfn) {
   if (!arc.jwt) {
     return cfn;
   }
 
-  const existingApi = getExistingApiName(cfn);
-  const apiName = existingApi || `${toLogicalID(arc.app[0])}Api`;
-
-  if (!existingApi) {
-    createHttpApiResource(apiName, cfn);
-  }
-
+  const apiName = getApiName(cfn);
   const config = getConfig(arc);
   const httpApi = cfn.Resources[apiName];
 
@@ -32,32 +27,25 @@ module.exports = function(arc, cfn) {
   if (config.default) {
     httpApi.Properties.Auth.DefaultAuthorizer = 'OAuth2Authorizer';
   } else {
-    const secureRoutes = arc.http
-      .map(route => yargs(route))
-      .filter(route => Boolean(route.jwt));
+    for (const resource of findRoutes(cfn)) {
+      const pathToCode = cfn.Resources[resource].Properties.CodeUri;
+      const config = getRouteConfig(pathToCode);
 
-    for (const route of secureRoutes) {
-      const resource = findResourceForRoute(
-        cfn,
-        route._[0],
-        unexpress(route._[1])
-      );
-      const authScopes =
-        route.jwt === true ? [] : route.jwt.split(',').map(s => s.trim());
-
-      cfn.Resources[resource].Properties.Events[
-        `${resource}Event`
-      ].Properties.Auth = {
-        Authorizer: 'OAuth2Authorizer',
-        AuthorizationScopes: authScopes,
-      };
+      if (config !== false) {
+        cfn.Resources[resource].Properties.Events[
+          `${resource}Event`
+        ].Properties.Auth = {
+          Authorizer: 'OAuth2Authorizer',
+          AuthorizationScopes: config.scopes,
+        };
+      }
     }
   }
 
   return cfn;
 };
 
-function findResourceForRoute(cfn, method, path) {
+function findRoutes(cfn) {
   return Object.keys(cfn.Resources)
     .filter(
       resource => cfn.Resources[resource].Type === 'AWS::Serverless::Function'
@@ -69,59 +57,21 @@ function findResourceForRoute(cfn, method, path) {
       resource =>
         cfn.Resources[resource].Properties.Events[`${resource}Event`].Type ===
         'HttpApi'
-    )
-    .filter(
-      resource =>
-        cfn.Resources[resource].Properties.Events[`${resource}Event`].Properties
-          .Path === path
-    )
-    .find(
-      resource =>
-        cfn.Resources[resource].Properties.Events[`${resource}Event`].Properties
-          .Method === method.toUpperCase()
     );
 }
 
-function getExistingApiName(cfn) {
+function getApiName(cfn) {
   return Object.keys(cfn.Resources).find(
     resource => cfn.Resources[resource].Type === 'AWS::Serverless::HttpApi'
   );
 }
 
-function createHttpApiResource(apiName, cfn) {
-  cfn.Resources[apiName] = {
-    Type: 'AWS::Serverless::HttpApi',
-    Properties: {
-      FailOnWarnings: true,
-    },
-  };
-
-  cfn.Outputs.HTTP = {
-    Description: 'API Gateway',
-    Value: {
-      'Fn::Sub': [
-        'https://${idx}.execute-api.${AWS::Region}.amazonaws.com', // eslint-disable-line no-template-curly-in-string
-        {
-          idx: {
-            Ref: apiName,
-          },
-        },
-      ],
-    },
-  };
-
-  for (const resource of Object.keys(cfn.Resources)) {
-    if (cfn.Resources[resource].Type === 'AWS::Serverless::Function') {
-      const eventname = `${resource}Event`;
-      cfn.Resources[resource].Properties.Events[eventname].Properties.ApiId = {
-        Ref: apiName,
-      };
-
-      if (cfn.Resources[resource].Properties.Events.ImplicitApi) {
-        delete cfn.Resources[resource].Properties.Events.ImplicitApi;
-      }
-    }
+function splitStrings([key, value]) {
+  if (key === 'audience' || key === 'scopes') {
+    return [key, value.split(',')];
   }
+
+  return [key, value];
 }
 
 function getConfig(arc) {
@@ -133,23 +83,29 @@ function getConfig(arc) {
     default: false,
   };
 
-  return arc.jwt.reduce((cfg, value) => {
-    if (value[0] === 'audience' || value[0] === 'scopes') {
-      cfg[value[0]] = value[1].split(',').map(s => s.trim());
-    } else {
-      cfg[value[0]] = value[1];
-    }
-
-    return cfg;
-  }, defaultConfig);
+  return {
+    ...defaultConfig,
+    ...Object.fromEntries(arc.jwt.map((setting) => splitStrings(setting))),
+  };
 }
 
-function unexpress(completeRoute) {
-  return completeRoute
-    .split('/')
-    .map(part => {
-      const isParameter = part[0] === ':';
-      return isParameter ? `{${part.replace(':', '')}}` : part;
-    })
-    .join('/');
+function getRouteConfig(pathToCode) {
+  const defaultConfig = {
+    scopes: [],
+  };
+  const arcFile = path.join(pathToCode, '.arc-config');
+  const exists = fs.existsSync(arcFile);
+
+  if (exists) {
+    const raw = fs.readFileSync(arcFile).toString().trim();
+    const config = parse(raw);
+
+    if (config.jwt) {
+      return {
+        ...defaultConfig,
+        ...Object.fromEntries(config.jwt.map((setting) => splitStrings(setting))),
+      };
+    }
+  }
+  return false;
 }

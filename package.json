@@ -1,12 +1,9 @@
 {
   "name": "arc-macro-jwt",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Use JWT authentication with Architect HTTP APIs",
   "main": "src/macros/arc-macro-jwt.js",
-  "dependencies": {
-    "@architect/utils": "^1.5.2",
-    "yargs-parser": "^18.1.2"
-  },
+  "dependencies": {},
   "scripts": {
     "lint": "xo --fix"
   },
@@ -21,10 +18,11 @@
   "prettier": {
     "trailingComma": "es5"
   },
-  "author": "Thomas Pedersen <hi@thomas.pe>",
+  "author": "Thomas Pedersen <hei@thomas.pe>",
   "license": "MIT",
   "devDependencies": {
-    "@architect/macro-http-api": "^1.0.0",
-    "xo": "^0.28.1"
+    "@architect/architect": "^6.5.3",
+    "@architect/deploy": "^1.9.0-RC.0",
+    "xo": "^0.32.1"
   }
 }
