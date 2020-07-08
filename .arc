@@ -7,8 +7,8 @@ apigateway http
 
 @http
 get /foo
-post /foo #jwt
-get /bar/:baz #jwt read:bar,write:bar
+post /foo
+get /bar/:baz
 
 @jwt
 issuer https://example.auth0.com/ #Issuer of JWT

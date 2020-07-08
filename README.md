@@ -2,7 +2,7 @@
 
 Use JWT authentication with [Architect](https://arc.codes) HTTP APIs (APIG HTTP Api only).
 
-###Install:
+### Install:
 
 `npm i arc-macro-jwt`
 
@@ -12,6 +12,9 @@ Add to your .arc-file:
 @app
 myapp
 
+@aws
+apigateway http
+
 @jwt
 issuer https://example.auth0.com/ #Issuer of JWT
 audience https://example.com,https://example2.com #Audience in the JWT
@@ -20,9 +23,9 @@ scopes read:foo,write:foo #Not required
 default false #Set to true to secure all routes (@jwt pragmas in .arc-config are ignored)
 
 @http
-get / #Not secured
-get /foo --jwt #Secured with default scopes
-get /bar --jwt read:bar,... #Secured with specified scopes
+get /
+get /foo
+get /bar
 
 @macros
 arc-macro-jwt
