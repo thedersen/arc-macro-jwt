@@ -46,18 +46,23 @@ module.exports = function(arc, cfn) {
 };
 
 function findRoutes(cfn) {
-  return Object.keys(cfn.Resources)
-    .filter(
-      resource => cfn.Resources[resource].Type === 'AWS::Serverless::Function'
-    )
-    .filter(resource =>
-      Boolean(cfn.Resources[resource].Properties.Events[`${resource}Event`])
-    )
-    .filter(
-      resource =>
-        cfn.Resources[resource].Properties.Events[`${resource}Event`].Type ===
-        'HttpApi'
+  function isFunction(resource) {
+    return resource.Type === 'AWS::Serverless::Function';
+  }
+
+  function hasHttpEvent(resource, name) {
+    return (
+      resource.Properties &&
+      resource.Properties.Events &&
+      Object.keys(resource.Properties.Events).length > 0 &&
+      Object.keys(resource.Properties.Events).includes(`${name}Event`) &&
+      resource.Properties.Events[`${name}Event`].Type === 'HttpApi'
     );
+  }
+
+  return Object.keys(cfn.Resources)
+    .filter((resource) => isFunction(cfn.Resources[resource]))
+    .filter((resource) => hasHttpEvent(cfn.Resources[resource], resource));
 }
 
 function getApiName(cfn) {
